@@ -39,16 +39,16 @@ int readConfig()
    	dataSource[deviceId].deviceType  = RTU_DI8;
 
     // These values will be overwrtten by cmd line options
-	dataSource[deviceId].modbusId    = 1;
-	dataSource[deviceId].baudRate    = 19200;
-	dataSource[deviceId].dataBits    = 8;		
+	dataSource[deviceId].modbusId = 1;
+	dataSource[deviceId].baudRate = 19200;
+	dataSource[deviceId].dataBits = 8;		
+	dataSource[deviceId].stopBit  = 1;
+	dataSource[deviceId].timeout  = 5;
 	strcpy(dataSource[deviceId].parity,"None");
-	dataSource[deviceId].stopBit     = 1;
-	dataSource[deviceId].timeout     = 5;
 	strcpy(dataSource[deviceId].interface, "/dev/ttyUSB0");
 	
 	
-		dataSource[deviceId].ChanMode[1] = 0;  // 0/1 = Logic Level 	2 = Pulse Count 	3 = PWM Measurement
+	dataSource[deviceId].ChanMode[1] = 0;  // 0/1 = Logic Level 	2 = Pulse Count 	3 = PWM Measurement
 	dataSource[deviceId].ChanMode[2] = 0; 
 	dataSource[deviceId].ChanMode[3] = 0; 
 	dataSource[deviceId].ChanMode[4] = 0; 
@@ -130,10 +130,8 @@ void printConfig()
 	
 	printf("--------- Config Imported ----------\n\n");
 
-	// i = device  n = register
-   for(deviceId=1 ; deviceId<(config.dsTotal+1) ; deviceId++)
-   {	
-	
+    for(deviceId=1 ; deviceId<(config.dsTotal+1) ; deviceId++)
+    {	
 		printf("dataSource [%i] deviceType  = [%i]  \n", deviceId, dataSource[deviceId].deviceType);
 		printf("dataSource [%i] modbusId    = [%i]  \n", deviceId, dataSource[deviceId].modbusId);
 		printf("dataSource [%i] interface   = [%s]  \n", deviceId, dataSource[deviceId].interface);

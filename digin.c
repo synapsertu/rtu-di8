@@ -21,13 +21,6 @@
         OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
         SOFTWARE.
 		
-		int numRegisters;				//  Total number of registers enabled to scan fr
-		int ChanMode[8];				//  Per-chan mode, this gives the chan setting or mode e.g.ADC this is the resolution setting for Digin this the chan mode 
-		int regAddress[MAX_DATAPOINTS]; //  addess minus the 40000 multiier, total  max registers per device              	
-		float value[MAX_DATAPOINTS];	// 	decoded (and then scaled) value for the register	
-		
-		
-		
 */	
 
 			
@@ -128,7 +121,6 @@ void displayDigInValues(int deviceId, int displayType)
 	{			
 		printf("_____| DI8 Modbus Address %i |______________________________________________________________________\n", dataSource[deviceId].modbusId);
 		printf("Ch\tMode\tLevel\tCount\t\tPWM\t\tMin Pk\t\tAvg\t\tMax Pk\n");
-
        
         // see https://eecs.wsu.edu/~cs150/reading/printf.htm for futher information on printf formating 
 
@@ -349,7 +341,7 @@ int reconfigureRTU(int deviceId, int modbusBaudSetting, int chanModeSetting[], i
 
 int getChanConfig(modbus_t *mb, int deviceId)
 {
-	// Defines storage for returned registers from modbus read, *must* equal or exceed maximum number of registers requested, ask me how I know...
+	// Defines storage for returned registers from modbus read, *must* equal or exceed maximum number of registers requested
 	uint16_t mbdata_UI16[30]; 
 
 	int rc;	
