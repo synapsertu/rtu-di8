@@ -215,7 +215,7 @@ int main(int argc, char *argv[])
 
 	if (displayType == HUMANREAD)
 	{
-		printf("\nSynapse RTU-AI8 Reader - v1.0\n\n");
+		printf("\nSynapse RTU-DI8 Reader - v1.0\n\n");
 	}
 
 	// Write
