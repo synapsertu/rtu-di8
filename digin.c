@@ -127,7 +127,7 @@ void displayDigInValues(int deviceId, int displayType)
 
         for(int chanNo=1 ; chanNo <9 ; chanNo++)
 		{		
-            printf("1\t%s\t", chMode[dataSource[deviceId].ChanMode[chanNo]]);
+            printf("%i\t%s\t", chanNo, chMode[dataSource[deviceId].ChanMode[chanNo]]);
 
             if (dataSource[deviceId].ChanMode[chanNo]  < 2 )      // Level 
                 printf("%-8i%-16s%-16s%-16s%-16s%-16s",chanLvl[chanNo],"-","-","-","-","-"); 
