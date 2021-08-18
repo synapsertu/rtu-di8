@@ -64,6 +64,7 @@ int main(int argc, char *argv[])
 	int modbusBaudSetting = 0;
 	int pwmAverageSetting = 0;
 	int debouncePeriod = 0;
+	int resetValue=0;
 
 	// Load Config, this is
 	readConfig();
@@ -74,7 +75,7 @@ int main(int argc, char *argv[])
 	//
 	// The colon after the letter tells getopt to expect an argument after the option
 	// To disable the automatic error printing, put a colon as the first character
-	while ((opt = getopt(argc, argv, ":hjcda:b:p:1:2:3:4:5:6:7:8:v:l:m:w")) != -1)
+	while ((opt = getopt(argc, argv, ":hjcda:b:p:r:1:2:3:4:5:6:7:8:v:l:m:w")) != -1)
 	{
 		switch (opt)
 		{
@@ -109,6 +110,14 @@ int main(int argc, char *argv[])
 			displayType = HUMANREAD;
 			configWrite = 1;
 			break;
+		case 'r': // Write Pulse Count Totaliser Reset Value if valid value set
+			if (atoi(optarg) > 879 && atoi(optarg) < 889)
+			{
+				displayType = HUMANREAD;
+				resetValue = atoi(optarg);
+				break;	
+			}
+			
 		case '1': // Configure RTU Channel 1 Mode setting
 			if (atoi(optarg) < 4 && atoi(optarg) > 0)
 			{
@@ -177,7 +186,7 @@ int main(int argc, char *argv[])
 			break;
 		case '?':
 			printf("Synapse RTU-DI8 Reader - v1.0\n\n");
-			printf("%s [-h|j|c] [-a] [-b] [-p] [-1] [-2] [-3] [-4] [-5] [-6] [-7] [-8] [-l] [-v] [-m] [-w] [-d]\n\n", argv[0]);
+			printf("%s [-h|j|c] [-a] [-b] [-p] [-1] [-2] [-3] [-4] [-5] [-6] [-7] [-8] [-r] [-l] [-v] [-m] [-w] [-d]\n\n", argv[0]);
 			printf("Syntax :\n\n");
 			printf("-h = Human readable output (default)\n");
 			printf("-j = JSON readable output\n");
@@ -199,6 +208,7 @@ int main(int argc, char *argv[])
 			printf("-l = Set ms value for pulse count de-bounce setting register (1-1000)              - default=10ms\n");
 			printf("-v = Select number of readings for PWM averaging (1=4|2=8)                         - default=8 readings\n");
 			printf("-m = Set value for RTU Baud Rate register (1=9600/2=14400/3=19200/4=38400/5=57600)  \n");
+			printf("-r = Write pulse count reset value (880-887=CH1-CH8/888=All Channels)  \n");
 			printf("\n");
 			printf("-w = Confirm writing configured setting registers to RTU NVRAM\n");
 			printf("\n");
@@ -218,6 +228,11 @@ int main(int argc, char *argv[])
 		printf("\nSynapse RTU-DI8 Reader - v1.0\n\n");
 	}
 
+	if (resetValue >0)
+	{
+		resetCounter(resetValue, deviceId);
+		exit(0);
+	}
 	// Write
 	if (configWrite == 1)
 	{

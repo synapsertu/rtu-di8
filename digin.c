@@ -127,7 +127,7 @@ void displayDigInValues(int deviceId, int displayType)
 
         for(int chanNo=1 ; chanNo <9 ; chanNo++)
 		{		
-            printf("%i\t%s\t", chanNo, chMode[dataSource[deviceId].ChanMode[chanNo]]);
+            printf("%i\t%s\t", chanNo,chMode[dataSource[deviceId].ChanMode[chanNo]]);
 
             if (dataSource[deviceId].ChanMode[chanNo]  < 2 )      // Level 
                 printf("%-8i%-16s%-16s%-16s%-16s%-16s",chanLvl[chanNo],"-","-","-","-","-"); 
@@ -368,3 +368,65 @@ int getChanConfig(modbus_t *mb, int deviceId)
 	return 0;
 }
 
+// Uses modbus_write_registers (FC16) to reset max readings to 0 so current values always exceeds it
+int resetCounter(int resetValue, int deviceId) 
+{  
+
+	int rc;	
+	int regId;
+
+
+	uint16_t tableRegisters[1] = {resetValue}; 
+
+	// modbus device handle
+	modbus_t *mb;  
+	
+	// Defines storage for returned registers from modbus read, *must* equal or exceed maximum number of registers requested, ask me how I know...
+	uint16_t mbdata_UI16[30]; 
+
+	
+	mb = modbus_new_rtu( dataSource[deviceId].interface, 
+					 	 dataSource[deviceId].baudRate,
+						 dataSource[deviceId].parity[0],
+						 dataSource[deviceId].dataBits,
+						 dataSource[deviceId].stopBit);
+						
+	modbus_set_slave(mb, dataSource[deviceId].modbusId);
+
+
+	// Set per-byte and total timeouts, this format has changed from the older libmodbus version.		
+	// This could be useful if we've a latent RF-Link 
+	// TODO : Don't hard code this, allow it to be configurable
+	modbus_set_response_timeout(mb, 5, (5*1000000));
+	modbus_set_byte_timeout(mb,5,(5*1000000));
+
+	
+	// Enable/Disable Modbus debug
+	modbus_set_debug(mb, FALSE);
+
+	// check we can connect (not sure if this is relevant on serial modbus)
+	if(modbus_connect(mb) == -1)
+	{
+		printf("Connect Failed to Modbus ID [%i] on [%s]\n", dataSource[deviceId].modbusId, 
+															 dataSource[deviceId].interface);
+		modbus_close(mb);
+		modbus_free(mb);
+		return -1;
+	}
+
+	
+	printf("Writing Counter reset value [%i]...\n\r", resetValue);
+	// remember that modbus registers index from 0 so address 40001 = 0th register
+	// reg 124 = address 123
+	rc = modbus_write_registers(mb, 123,  1, tableRegisters);
+	if (rc == -1)
+	{
+		printf("Modbus request Fail : Device Address [%i] Start Address [72] For [1] Registers \n",deviceId);
+		modbus_close(mb);
+		modbus_free(mb);
+		exit(1);
+	}			
+	
+	exit(0);
+
+}
