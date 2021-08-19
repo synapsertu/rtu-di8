@@ -430,3 +430,77 @@ int resetCounter(int resetValue, int deviceId)
 	exit(0);
 
 }
+
+
+
+// Uses modbus_write_registers (FC16) to reset max readings to 0 so current values always exceeds it
+int writeoffset(int chanNo, int chanOffset, int deviceId)
+{  
+
+	int rc;	
+	int regId;
+
+	regId = ((87+(chanNo*2))-1);  // 87 +  2 =  89 -1 = 88  
+								  // 87 + 16 = 103 -1 = 102
+
+	uint16_t tableRegisters[2] = {0}; 
+
+	tableRegisters[0] = chanOffset >> 16 & 0xffff;  // Upper 
+    tableRegisters[1] = chanOffset & 0xffff;        // lower 
+
+
+
+	// modbus device handle
+	modbus_t *mb;  
+	
+	// Defines storage for returned registers from modbus read, *must* equal or exceed maximum number of registers requested, ask me how I know...
+	uint16_t mbdata_UI16[30]; 
+
+	
+	mb = modbus_new_rtu( dataSource[deviceId].interface, 
+					 	 dataSource[deviceId].baudRate,
+						 dataSource[deviceId].parity[0],
+						 dataSource[deviceId].dataBits,
+						 dataSource[deviceId].stopBit);
+						
+	modbus_set_slave(mb, dataSource[deviceId].modbusId);
+
+
+	// Set per-byte and total timeouts, this format has changed from the older libmodbus version.		
+	// This could be useful if we've a latent RF-Link 
+	// TODO : Don't hard code this, allow it to be configurable
+	modbus_set_response_timeout(mb, 5, (5*1000000));
+	modbus_set_byte_timeout(mb,5,(5*1000000));
+
+	
+	// Enable/Disable Modbus debug
+	modbus_set_debug(mb, FALSE);
+
+	// check we can connect (not sure if this is relevant on serial modbus)
+	if(modbus_connect(mb) == -1)
+	{
+		printf("Connect Failed to Modbus ID [%i] on [%s]\n", dataSource[deviceId].modbusId, 
+															 dataSource[deviceId].interface);
+		modbus_close(mb);
+		modbus_free(mb);
+		return -1;
+	}
+
+	
+	printf("Writing offset values [%i]+[%i] to registers [%i]+[%i]...\n\r",tableRegisters[0],tableRegisters[1], (regId+1),(regId+2));
+	// remember that modbus registers index from 0 so address 40001 = 0th register
+	// reg 124 = address 123
+	rc = modbus_write_registers(mb, regId,  2, tableRegisters);
+	if (rc == -1)
+	{
+		printf("Modbus request Fail : Device Address [%i] Start Address [%i] For [2] Registers \n",deviceId, regId);
+		modbus_close(mb);
+		modbus_free(mb);
+		exit(1);
+	}			
+	
+	exit(0);
+
+}
+
+

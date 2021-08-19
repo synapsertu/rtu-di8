@@ -65,6 +65,8 @@ int main(int argc, char *argv[])
 	int pwmAverageSetting = 0;
 	int debouncePeriod = 0;
 	int resetValue=0;
+	int chanNo=0;
+	int chanOffset=-1;
 
 	// Load Config, this is
 	readConfig();
@@ -75,7 +77,7 @@ int main(int argc, char *argv[])
 	//
 	// The colon after the letter tells getopt to expect an argument after the option
 	// To disable the automatic error printing, put a colon as the first character
-	while ((opt = getopt(argc, argv, ":hjcda:b:p:r:1:2:3:4:5:6:7:8:v:l:m:w")) != -1)
+	while ((opt = getopt(argc, argv, ":hjcda:b:p:r:t:y:1:2:3:4:5:6:7:8:v:l:m:w")) != -1)
 	{
 		switch (opt)
 		{
@@ -116,8 +118,21 @@ int main(int argc, char *argv[])
 				displayType = HUMANREAD;
 				resetValue = atoi(optarg);
 				break;	
-			}
-			
+			}			
+		case 't': // Channel to write offset value to 
+			if (atoi(optarg) > 0 && atoi(optarg) < 9)
+			{
+				displayType = HUMANREAD;
+				chanNo = atoi(optarg);
+				break;	
+			}				
+		case 'y': // Offset value to write
+			if (atoi(optarg) >= 0 && atoi(optarg) < 4294967295)
+			{
+				displayType = HUMANREAD;
+				chanOffset = atoi(optarg);
+				break;	
+			}				
 		case '1': // Configure RTU Channel 1 Mode setting
 			if (atoi(optarg) < 4 && atoi(optarg) > 0)
 			{
@@ -186,7 +201,7 @@ int main(int argc, char *argv[])
 			break;
 		case '?':
 			printf("Synapse RTU-DI8 Reader - v1.0\n\n");
-			printf("%s [-h|j|c] [-a] [-b] [-p] [-1] [-2] [-3] [-4] [-5] [-6] [-7] [-8] [-r] [-l] [-v] [-m] [-w] [-d]\n\n", argv[0]);
+			printf("%s [-h|j|c] [-a] [-b] [-p] [-1] [-2] [-3] [-4] [-5] [-6] [-7] [-8] [-r] [-t] [-y] [-l] [-v] [-m] [-w] [-d]\n\n", argv[0]);
 			printf("Syntax :\n\n");
 			printf("-h = Human readable output (default)\n");
 			printf("-j = JSON readable output\n");
@@ -208,7 +223,10 @@ int main(int argc, char *argv[])
 			printf("-l = Set ms value for pulse count de-bounce setting register (1-1000)              - default=10ms\n");
 			printf("-v = Select number of readings for PWM averaging (1=4|2=8)                         - default=8 readings\n");
 			printf("-m = Set value for RTU Baud Rate register (1=9600/2=14400/3=19200/4=38400/5=57600)  \n");
+			printf("\n");
 			printf("-r = Write pulse count reset value (880-887=CH1-CH8/888=All Channels)  \n");
+			printf("-t = Set chanel to write offset value to (1-8)  \n");
+			printf("-y = Set offset value to write (1-4294967294)  \n");
 			printf("\n");
 			printf("-w = Confirm writing configured setting registers to RTU NVRAM\n");
 			printf("\n");
@@ -228,12 +246,23 @@ int main(int argc, char *argv[])
 		printf("\nSynapse RTU-DI8 Reader - v1.0\n\n");
 	}
 
+	// Write
+	
 	if (resetValue >0)
 	{
 		resetCounter(resetValue, deviceId);
 		exit(0);
 	}
-	// Write
+
+
+	if (chanOffset >-1 && chanNo >0)
+	{
+		writeoffset(chanNo, chanOffset, deviceId);
+		exit(0);
+	}
+
+	
+
 	if (configWrite == 1)
 	{
 		reconfigureRTU(deviceId, modbusBaudSetting, chanModeSetting, pwmAverageSetting, debouncePeriod);

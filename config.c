@@ -118,7 +118,7 @@ int readConfig()
 	dataSource[deviceId].regAddress[45] =81 ;	dataSource[deviceId].regType[45] =3  ;		// PWM Channel 5 Minumum Reading  (32bit integer big endian)	
 	dataSource[deviceId].regAddress[46] =83 ;	dataSource[deviceId].regType[46] =3  ;		// PWM Channel 6 Minumum Reading  (32bit integer big endian)	
 	dataSource[deviceId].regAddress[47] =85 ;	dataSource[deviceId].regType[47] =3  ;		// PWM Channel 7 Minumum Reading  (32bit integer big endian)	
-	dataSource[deviceId].regAddress[48] =87 ;	dataSource[deviceId].regType[48] =3  ;		// PWM Channel 7 Minumum Reading  (32bit integer big endian)	
+	dataSource[deviceId].regAddress[48] =87 ;	dataSource[deviceId].regType[48] =3  ;		// PWM Channel 8 Minumum Reading  (32bit integer big endian)	
 
 
 }
