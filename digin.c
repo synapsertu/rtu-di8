@@ -551,8 +551,8 @@ int showPWMchanStatus(int deviceId)
 	// Set per-byte and total timeouts, this format has changed from the older libmodbus version.		
 	// This could be useful if we've a latent RF-Link 
 	// TODO : Don't hard code this, allow it to be configurable
-	modbus_set_response_timeout(mb, 19, (10*1000000));
-	modbus_set_byte_timeout(mb,10,(10*1000000));
+	modbus_set_response_timeout(mb, 5, (5*1000000));
+	modbus_set_byte_timeout(mb,10,(5*1000000));
 
 	
 	// Enable/Disable Modbus debug
