@@ -254,6 +254,7 @@ int reconfigureRTU(int deviceId, int modbusBaudSetting, int chanModeSetting[], i
 	{
 		printf("Connect Failed to Modbus ID [%i] on [%s]\n", dataSource[deviceId].modbusId, 
 															 dataSource[deviceId].interface);
+		modbus_flush(mb);
 		modbus_close(mb); 
 		modbus_free(mb);
 		return -1;
@@ -272,6 +273,7 @@ int reconfigureRTU(int deviceId, int modbusBaudSetting, int chanModeSetting[], i
 			if (rc == -1)
 			{
 				printf("Modbus request Fail : Device Address [%i] Start Address [%i] For [1] Registers \n",deviceId,(103+i) );
+				modbus_flush(mb);
 				modbus_close(mb);
 				modbus_free(mb);
 				exit(1);
@@ -287,6 +289,7 @@ int reconfigureRTU(int deviceId, int modbusBaudSetting, int chanModeSetting[], i
 		if (rc == -1)
 		{
 			printf("Modbus request Fail : Device Address [%i] Start Address [120] For [1] Registers \n",deviceId);
+			modbus_flush(mb);
 			modbus_close(mb);
 			modbus_free(mb);
 			exit(1);
@@ -301,6 +304,7 @@ int reconfigureRTU(int deviceId, int modbusBaudSetting, int chanModeSetting[], i
 		if (rc == -1)
 		{
 			printf("Modbus request Fail : Device Address [%i] Start Address [121] For [1] Registers \n",deviceId);
+			modbus_flush(mb);
 			modbus_close(mb);
 			modbus_free(mb);
 			exit(1);
@@ -315,6 +319,7 @@ int reconfigureRTU(int deviceId, int modbusBaudSetting, int chanModeSetting[], i
 		if (rc == -1)
 		{
 			printf("Modbus request Fail : Device Address [%i] Start Address [123] For [1] Registers \n",deviceId);
+			modbus_flush(mb);
 			modbus_close(mb);
 			modbus_free(mb);
 			exit(1);
@@ -334,6 +339,9 @@ int reconfigureRTU(int deviceId, int modbusBaudSetting, int chanModeSetting[], i
 		exit(1);
 	}	
 
+	modbus_flush(mb);
+	modbus_close(mb);
+	modbus_free(mb);
 	return 0;
 
 }
@@ -351,6 +359,7 @@ int getChanConfig(modbus_t *mb, int deviceId)
 	if (rc == -1)
 	{
 		printf("Modbus request Fail : Device Address [%i] Start Address [104] For [8] Registers \n",deviceId);
+		modbus_flush(mb);
 		modbus_close(mb);
 		modbus_free(mb);
 		exit(1);
@@ -409,6 +418,7 @@ int resetCounter(int resetValue, int deviceId)
 	{
 		printf("Connect Failed to Modbus ID [%i] on [%s]\n", dataSource[deviceId].modbusId, 
 															 dataSource[deviceId].interface);
+		modbus_flush(mb);
 		modbus_close(mb);
 		modbus_free(mb);
 		return -1;
@@ -426,7 +436,10 @@ int resetCounter(int resetValue, int deviceId)
 		modbus_free(mb);
 		exit(1);
 	}			
-	
+
+	modbus_flush(mb);
+	modbus_close(mb);
+	modbus_free(mb);	
 	exit(0);
 
 }
@@ -481,6 +494,7 @@ int writeoffset(int chanNo, int chanOffset, int deviceId)
 	{
 		printf("Connect Failed to Modbus ID [%i] on [%s]\n", dataSource[deviceId].modbusId, 
 															 dataSource[deviceId].interface);
+		modbus_flush(mb);															 
 		modbus_close(mb);
 		modbus_free(mb);
 		return -1;
@@ -499,8 +513,90 @@ int writeoffset(int chanNo, int chanOffset, int deviceId)
 		exit(1);
 	}			
 	
+	modbus_flush(mb);
+	modbus_close(mb);
+	modbus_free(mb);
 	exit(0);
 
 }
 
+// Uses modbus_write_registers (FC16) to reset max readings to 0 so current values always exceeds it
+int showPWMchanStatus(int deviceId) 
+{  
 
+	int rc;	
+	int regId;
+
+	const char *chStatus[2];
+				chStatus[0] = "Channel OK";
+				chStatus[1] = "Channel Dead";
+
+
+	// modbus device handle
+	modbus_t *mb;  
+	
+	// Defines storage for returned registers from modbus read, *must* equal or exceed maximum number of registers requested, ask me how I know...
+	uint16_t mbdata_UI16[30]; 
+
+	
+	mb = modbus_new_rtu( dataSource[deviceId].interface, 
+					 	 dataSource[deviceId].baudRate,
+						 dataSource[deviceId].parity[0],
+						 dataSource[deviceId].dataBits,
+						 dataSource[deviceId].stopBit);
+						
+	modbus_set_slave(mb, dataSource[deviceId].modbusId);
+
+
+	// Set per-byte and total timeouts, this format has changed from the older libmodbus version.		
+	// This could be useful if we've a latent RF-Link 
+	// TODO : Don't hard code this, allow it to be configurable
+	modbus_set_response_timeout(mb, 19, (10*1000000));
+	modbus_set_byte_timeout(mb,10,(10*1000000));
+
+	
+	// Enable/Disable Modbus debug
+	modbus_set_debug(mb, FALSE);
+
+	// check we can connect (not sure if this is relevant on serial modbus)
+	if(modbus_connect(mb) == -1)
+	{
+		printf("Connect Failed to Modbus ID [%i] on [%s]\n", dataSource[deviceId].modbusId, 
+															 dataSource[deviceId].interface);
+		modbus_flush(mb);															 
+		modbus_close(mb);
+		modbus_free(mb);
+		return -1;
+	}
+
+
+
+	// Get DI8 specific PWM Status registers
+	// 113-120 = Channel status
+	printf("Getting PWM Channel Status flags...\r\n");
+	rc = modbus_read_registers(mb, 112, 8, mbdata_UI16);		
+	if (rc == -1)
+	{
+		printf("Modbus request Fail : Device Address [%i] Start Address [112] For [8] Registers \n",deviceId);
+		modbus_flush(mb);			
+		modbus_close(mb);
+		modbus_free(mb);
+		exit(1);
+	}	
+		printf("\n\r");
+		printf ("Channel 1 PWM Status : %s\n\r",chStatus[mbdata_UI16[0]]);
+		printf ("Channel 2 PWM Status : %s\n\r",chStatus[mbdata_UI16[1]]);
+		printf ("Channel 3 PWM Status : %s\n\r",chStatus[mbdata_UI16[2]]);
+		printf ("Channel 4 PWM Status : %s\n\r",chStatus[mbdata_UI16[3]]);
+		printf ("Channel 5 PWM Status : %s\n\r",chStatus[mbdata_UI16[4]]);
+		printf ("Channel 6 PWM Status : %s\n\r",chStatus[mbdata_UI16[5]]);
+		printf ("Channel 7 PWM Status : %s\n\r",chStatus[mbdata_UI16[6]]);
+		printf ("Channel 8 PWM Status : %s\n\r",chStatus[mbdata_UI16[7]]);
+		printf("\n\r");
+
+	modbus_flush(mb);
+	modbus_close(mb);
+	modbus_free(mb);	
+	exit(0);
+
+}

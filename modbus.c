@@ -55,8 +55,8 @@ int getModbusValues()
 		// Set per-byte and total timeouts, this format has changed from the older libmodbus version.
 		// This could be useful if we've a latent RF-Link
 		// TODO : Don't hard code this, allow it to be configurable
-		modbus_set_response_timeout(mb, 5, (5 * 1000000));
-		modbus_set_byte_timeout(mb, 5, (5 * 1000000));
+		modbus_set_response_timeout(mb, 5, (5*1000000));
+		modbus_set_byte_timeout(mb,5,(5*1000000));
 
 		// Enable/Disable Modbus debug
 		modbus_set_debug(mb, FALSE);
@@ -65,7 +65,8 @@ int getModbusValues()
 		if (modbus_connect(mb) == -1)
 		{
 			printf("Connect Failed to Modbus ID [%i] on [%s]\n", dataSource[deviceId].modbusId,
-				   dataSource[deviceId].interface);
+				   												 dataSource[deviceId].interface);
+			modbus_flush(mb);	   
 			modbus_close(mb);
 			modbus_free(mb);
 			return -1;
@@ -195,6 +196,7 @@ int getModbusValues()
 				if (rc == -1)
 				{
 					printf("Modbus request Fail : Device Address [%i] Start Address [%i] For [%i] Registers \n", dataSource[deviceId].modbusId, (wStartReg - 1), (requestedRegisters + 1));
+					modbus_flush(mb);
 					modbus_close(mb);
 					modbus_free(mb);
 					exit(1);
@@ -213,7 +215,7 @@ int getModbusValues()
 			}
 		}
 	}
-
+	modbus_flush(mb);
 	modbus_close(mb);
 	modbus_free(mb);
 

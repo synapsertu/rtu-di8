@@ -67,6 +67,7 @@ int main(int argc, char *argv[])
 	int resetValue=0;
 	int chanNo=0;
 	int chanOffset=-1;
+	int showPWMstatus = 0;
 
 	// Load Config, this is
 	readConfig();
@@ -77,7 +78,7 @@ int main(int argc, char *argv[])
 	//
 	// The colon after the letter tells getopt to expect an argument after the option
 	// To disable the automatic error printing, put a colon as the first character
-	while ((opt = getopt(argc, argv, ":hjcda:b:p:r:t:y:1:2:3:4:5:6:7:8:v:l:m:w")) != -1)
+	while ((opt = getopt(argc, argv, ":hjcda:b:p:r:t:y:s1:2:3:4:5:6:7:8:v:l:m:w")) != -1)
 	{
 		switch (opt)
 		{
@@ -132,7 +133,11 @@ int main(int argc, char *argv[])
 				displayType = HUMANREAD;
 				chanOffset = atoi(optarg);
 				break;	
-			}				
+			}			
+		case 's': // show status of PWM channels
+				displayType = HUMANREAD;
+				showPWMstatus = 1;
+				break;	
 		case '1': // Configure RTU Channel 1 Mode setting
 			if (atoi(optarg) < 4 && atoi(optarg) > 0)
 			{
@@ -221,12 +226,14 @@ int main(int argc, char *argv[])
 			printf("-8 = Set Channel 8 mode register (1=Logic Level|2=Pulse Counter|3=PWM Measurement) - default=Logic Level\n");
 			printf("\n");
 			printf("-l = Set ms value for pulse count de-bounce setting register (1-1000)              - default=10ms\n");
-			printf("-v = Select number of readings for PWM averaging (1=4|2=8)                         - default=8 readings\n");
+			printf("-v = Select number of readings for PWM averaging (1=4|2=8)                         - default=8 readings\n");			
 			printf("-m = Set value for RTU Baud Rate register (1=9600/2=14400/3=19200/4=38400/5=57600)  \n");
 			printf("\n");
 			printf("-r = Write pulse count reset value (880-887=CH1-CH8/888=All Channels)  \n");
 			printf("-t = Set channel to write offset value to (1-8)  \n");
-			printf("-y = Set offset value to write (1-4294967294)  \n");
+			printf("-y = Set offset value to write (1-4294967294)  \n");			
+			printf("\n");
+			printf("-s = show Good/Dead status of PWM input channels  \n");
 			printf("\n");
 			printf("-w = Confirm writing configured setting registers to RTU NVRAM\n");
 			printf("\n");
@@ -245,6 +252,13 @@ int main(int argc, char *argv[])
 	{
 		printf("\nSynapse RTU-DI8 Reader - v1.0\n\n");
 	}
+
+	if (showPWMstatus == 1)
+	{	
+		showPWMchanStatus(deviceId);
+		exit(0);
+	}
+
 
 	// Write
 	
