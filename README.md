@@ -43,6 +43,8 @@ Syntax :
 -t = Set channel to write offset value to (1-8)
 -y = Set offset value to write (1-4294967294)
 
+-s = show Good/Dead status of PWM input channels
+
 -w = Confirm writing configured setting registers to RTU NVRAM
 
 -d = debug mode
