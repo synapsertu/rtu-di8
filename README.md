@@ -40,7 +40,7 @@ Syntax :
 -m = Set value for RTU Baud Rate register (1=9600/2=14400/3=19200/4=38400/5=57600)
 
 -r = Write pulse count reset value (880-887=CH1-CH8/888=All Channels)
--t = Set chanel to write offset value to (1-8)
+-t = Set channel to write offset value to (1-8)
 -y = Set offset value to write (1-4294967294)
 
 -w = Confirm writing configured setting registers to RTU NVRAM
