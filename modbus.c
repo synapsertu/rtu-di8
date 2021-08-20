@@ -52,14 +52,24 @@ int getModbusValues()
 
 		modbus_set_slave(mb, dataSource[deviceId].modbusId);
 
-		// Set per-byte and total timeouts, this format has changed from the older libmodbus version.
-		// This could be useful if we've a latent RF-Link
-		// TODO : Don't hard code this, allow it to be configurable
-		modbus_set_response_timeout(mb, 5, (5*1000000));
-		modbus_set_byte_timeout(mb,5,(5*1000000));
+		// Set per-byte and total timeouts to 5seconds, this format has changed from the older libmodbus version.
+		//
+		// int modbus_set_response_timeout(modbus_t *ctx, uint32_t to_sec, uint32_t to_usec);
+		//
+		// This usage syntax isn't super clear, so to explain you can use EITHER seconds OR microseconds,
+		// using BOTH will cause the command to be ignored and you will spend HOURS scraching your head.
+		//
+		// This could be useful if we've a latent RF-Link 
+		//
+		// TODO : Don't hard code this, allow it to be configurable	
+		modbus_set_response_timeout(mb, 5, 0);
+		modbus_set_byte_timeout(mb, 5 ,0);
 
 		// Enable/Disable Modbus debug
 		modbus_set_debug(mb, FALSE);
+		
+		// clear the serial port before first use
+		modbus_flush(mb);
 
 		// check we can connect (not sure if this is relevant on serial modbus)
 		if (modbus_connect(mb) == -1)
