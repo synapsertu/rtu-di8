@@ -68,6 +68,9 @@ int main(int argc, char *argv[])
 	int chanNo=0;
 	int chanOffset=-1;
 	int showPWMstatus = 0;
+	int resetMinValues = 0;
+	int resetMaxValues = 0;
+	int pwmCycleTime = 0;
 
 	// Load Config, this is
 	readConfig();
@@ -78,7 +81,7 @@ int main(int argc, char *argv[])
 	//
 	// The colon after the letter tells getopt to expect an argument after the option
 	// To disable the automatic error printing, put a colon as the first character
-	while ((opt = getopt(argc, argv, ":hjcda:b:p:r:t:y:s1:2:3:4:5:6:7:8:v:l:m:w")) != -1)
+	while ((opt = getopt(argc, argv, ":hjcda:b:p:r:t:y:szxu:1:2:3:4:5:6:7:8:v:l:m:w")) != -1)
 	{
 		switch (opt)
 		{
@@ -113,6 +116,14 @@ int main(int argc, char *argv[])
 			displayType = HUMANREAD;
 			configWrite = 1;
 			break;
+		case 'z': // Reset Min Peak Values 
+			displayType = HUMANREAD;
+			resetMinValues = 1;
+			break;	
+		case 'x': // Reset Max Peak Values 
+			displayType = HUMANREAD;
+			resetMaxValues = 1;
+			break;	
 		case 'r': // Write Pulse Count Totaliser Reset Value if valid value set
 			if (atoi(optarg) > 879 && atoi(optarg) < 889)
 			{
@@ -134,6 +145,13 @@ int main(int argc, char *argv[])
 				chanOffset = atoi(optarg);
 				break;	
 			}			
+		case 'u': // Write new min PWM cycle time
+			if (atoi(optarg) > 99 && atoi(optarg) < 10000)
+			{
+				displayType = HUMANREAD;
+				pwmCycleTime = atoi(optarg);				
+			}			
+			break;	
 		case 's': // show status of PWM channels
 				displayType = HUMANREAD;
 				showPWMstatus = 1;
@@ -206,7 +224,8 @@ int main(int argc, char *argv[])
 			break;
 		case '?':
 			printf("Synapse RTU-DI8 Reader - v1.0\n\n");
-			printf("%s [-h|j|c] [-a] [-b] [-p] [-1] [-2] [-3] [-4] [-5] [-6] [-7] [-8] [-r] [-t] [-y] [-l] [-v] [-m] [-w] [-d]\n\n", argv[0]);
+			printf("%s [-h|j|c] [-a] [-b] [-p] [-1] [-2] [-3] [-4] [-5] [-6] [-7] [-8] \n\r", argv[0]);
+			printf("                   [-z] [-x] [-r] [-t] [-y] [-l] [-v] [-m] [-w] [-d]\n\n");
 			printf("Syntax :\n\n");
 			printf("-h = Human readable output (default)\n");
 			printf("-j = JSON readable output\n");
@@ -231,8 +250,12 @@ int main(int argc, char *argv[])
 			printf("\n");
 			printf("-r = Write pulse count reset value (880-887=CH1-CH8/888=All Channels)  \n");
 			printf("-t = Set channel to write offset value to (1-8)  \n");
-			printf("-y = Set offset value to write (1-4294967294)  \n");			
+			printf("-y = Set offset value to write (0-4294967294)  \n");			
 			printf("\n");
+			printf("-z = Reset PWM Min Peak Value reading for all channels \n");
+			printf("-x = Reset PWM Max Peak Value reading for all channels \n");
+			printf("-u = Set New Minimum PWM cycle time  (100-10000ms)                                 - default=100ms\n");		
+			printf("\n");			
 			printf("-s = show Good/Dead status of PWM input channels  \n");
 			printf("\n");
 			printf("-w = Confirm writing configured setting registers to RTU NVRAM\n");
@@ -259,23 +282,41 @@ int main(int argc, char *argv[])
 		exit(0);
 	}
 
+	if (pwmCycleTime >0)
+	{	
+		setPWMCycleTime(deviceId, pwmCycleTime);
+		exit(0);
+	}
 
 	// Write
 	
+	// reset pulse counter totals, either by channel or all channels depending on value written
 	if (resetValue >0)
 	{
 		resetCounter(resetValue, deviceId);
 		exit(0);
 	}
 
-
+    // write an offset value for pulse counter channel
 	if (chanOffset >-1 && chanNo >0)
 	{
 		writeoffset(chanNo, chanOffset, deviceId);
 		exit(0);
 	}
 
-	
+	// reset PWM min peak readings value, takes current reading as new value 
+	if (resetMinValues >0)
+	{
+		resetMinReadings(deviceId);
+		exit(0);
+	}
+
+	// reset PWM max peak readings value, takes current reading as new value 
+	if (resetMaxValues >0)
+	{
+		resetMaxReadings(deviceId);
+		exit(0);
+	}
 
 	if (configWrite == 1)
 	{

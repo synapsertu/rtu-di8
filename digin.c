@@ -245,7 +245,7 @@ int reconfigureRTU(int deviceId, int modbusBaudSetting, int chanModeSetting[], i
 	// TODO : Don't hard code this, allow it to be configurable
 	
 	modbus_set_response_timeout(mb, 5, 0);
-	modbus_set_byte_timeout(mb, 5 ,0);
+	modbus_set_byte_timeout(mb, 5, 0);
 
 	// clear the serial port before first use
 	modbus_flush(mb);
@@ -322,7 +322,7 @@ int reconfigureRTU(int deviceId, int modbusBaudSetting, int chanModeSetting[], i
 		rc = modbus_write_registers(mb, 122,  1, tableRegisters);
 		if (rc == -1)
 		{
-			printf("Modbus request Fail : Device Address [%i] Start Address [123] For [1] Registers \n",deviceId);
+			printf("Modbus request Fail : Device Address [%i] Start Address [122] For [1] Registers \n",deviceId);
 			modbus_flush(mb);
 			modbus_close(mb);
 			modbus_free(mb);
@@ -334,10 +334,11 @@ int reconfigureRTU(int deviceId, int modbusBaudSetting, int chanModeSetting[], i
 
 	printf("Writing Config Register...\n");	
 	tableRegisters[0]=255;
-	rc = modbus_write_registers(mb, 123,  1, tableRegisters);
+	rc = modbus_write_registers(mb, 124,  1, tableRegisters);
 	if (rc == -1)
 	{
-		printf("Modbus request Fail : Device Address [%i] Start Address [123] For [1] Registers \n",deviceId);
+		printf("Modbus request Fail : Device Address [%i] Start Address [124] For [1] Registers \n",deviceId);
+		modbus_flush(mb);	
 		modbus_close(mb);
 		modbus_free(mb);
 		exit(1);
@@ -413,7 +414,7 @@ int resetCounter(int resetValue, int deviceId)
 	// TODO : Don't hard code this, allow it to be configurable
 	
 	modbus_set_response_timeout(mb, 5, 0);
-	modbus_set_byte_timeout(mb, 5 ,0);
+	modbus_set_byte_timeout(mb, 5, 0);
 
 	// clear the serial port before first use
 	modbus_flush(mb);
@@ -435,11 +436,12 @@ int resetCounter(int resetValue, int deviceId)
 	
 	printf("Writing Counter reset value [%i]...\n\r", resetValue);
 	// remember that modbus registers index from 0 so address 40001 = 0th register
-	// reg 124 = address 123
-	rc = modbus_write_registers(mb, 123,  1, tableRegisters);
+	// reg 125 = address 124
+	rc = modbus_write_registers(mb, 124,  1, tableRegisters);
 	if (rc == -1)
 	{
-		printf("Modbus request Fail : Device Address [%i] Start Address [72] For [1] Registers \n",deviceId);
+		printf("Modbus request Fail : Device Address [%i] Start Address [124] For [1] Registers \n",deviceId);
+		modbus_flush(mb);
 		modbus_close(mb);
 		modbus_free(mb);
 		exit(1);
@@ -493,7 +495,7 @@ int writeoffset(int chanNo, int chanOffset, int deviceId)
 	// TODO : Don't hard code this, allow it to be configurable
 	
 	modbus_set_response_timeout(mb, 5, 0);
-	modbus_set_byte_timeout(mb, 5 ,0);
+	modbus_set_byte_timeout(mb, 5, 0);
 
 	// clear the serial port before first use
 	modbus_flush(mb);
@@ -515,11 +517,11 @@ int writeoffset(int chanNo, int chanOffset, int deviceId)
 	
 	printf("Writing offset values [%i]+[%i] to registers [%i]+[%i]...\n\r",tableRegisters[0],tableRegisters[1], (regId+1),(regId+2));
 	// remember that modbus registers index from 0 so address 40001 = 0th register
-	// reg 124 = address 123
 	rc = modbus_write_registers(mb, regId,  2, tableRegisters);
 	if (rc == -1)
 	{
 		printf("Modbus request Fail : Device Address [%i] Start Address [%i] For [2] Registers \n",deviceId, regId);
+		modbus_flush(mb);
 		modbus_close(mb);
 		modbus_free(mb);
 		exit(1);
@@ -566,7 +568,7 @@ int showPWMchanStatus(int deviceId)
 	// TODO : Don't hard code this, allow it to be configurable
 	
 	modbus_set_response_timeout(mb, 5, 0);
-	modbus_set_byte_timeout(mb, 5 ,0);
+	modbus_set_byte_timeout(mb, 5, 0);
 	
 	// clear the serial port before first use
 	modbus_flush(mb);
@@ -647,8 +649,8 @@ int resetMinReadings(int deviceId)
 	// Set per-byte and total timeouts, this format has changed from the older libmodbus version.		
 	// This could be useful if we've a latent RF-Link 
 	// TODO : Don't hard code this, allow it to be configurable
-	modbus_set_response_timeout(mb, 5, (5*1000000));
-	modbus_set_byte_timeout(mb,5,(5*1000000));
+	modbus_set_response_timeout(mb, 5, 0);
+	modbus_set_byte_timeout(mb, 5, 0);
 	
 	// clear the serial port before first use
 	modbus_flush(mb);
@@ -718,8 +720,8 @@ int resetMaxReadings(int deviceId)
 	// Set per-byte and total timeouts, this format has changed from the older libmodbus version.		
 	// This could be useful if we've a latent RF-Link 
 	// TODO : Don't hard code this, allow it to be configurable
-	modbus_set_response_timeout(mb, 5, (5*1000000));
-	modbus_set_byte_timeout(mb,5,(5*1000000));
+	modbus_set_response_timeout(mb, 5, 0);
+	modbus_set_byte_timeout(mb, 5, 0);
 
 	// clear the serial port before first use
 	modbus_flush(mb);
@@ -758,4 +760,83 @@ int resetMaxReadings(int deviceId)
 	exit(0);
 
 }
+
+
+
+
+
+// Uses modbus_write_registers (FC16) to reset max readings to 0 so current values always exceeds it
+int setPWMCycleTime(int deviceId, int pwmCycleTime) 
+{  
+
+	int rc;	
+	int regId;
+
+
+	uint16_t tableRegisters[1] = {0}; 
+
+	tableRegisters[0] = pwmCycleTime;
+
+	// modbus device handle
+	modbus_t *mb;  
+	
+	// Defines storage for returned registers from modbus read, *must* equal or exceed maximum number of registers requested, ask me how I know...
+	uint16_t mbdata_UI16[30]; 
+
+	
+	mb = modbus_new_rtu( dataSource[deviceId].interface, 
+					 	 dataSource[deviceId].baudRate,
+						 dataSource[deviceId].parity[0],
+						 dataSource[deviceId].dataBits,
+						 dataSource[deviceId].stopBit);
+						
+	modbus_set_slave(mb, dataSource[deviceId].modbusId);
+
+
+	// Set per-byte and total timeouts, this format has changed from the older libmodbus version.		
+	// This could be useful if we've a latent RF-Link 
+	// TODO : Don't hard code this, allow it to be configurable
+	modbus_set_response_timeout(mb, 5, 0);
+	modbus_set_byte_timeout(mb, 5, 0);
+
+	// clear the serial port before first use
+	modbus_flush(mb);
+
+	// Enable/Disable Modbus debug
+	modbus_set_debug(mb, FALSE);
+
+	// check we can connect (not sure if this is relevant on serial modbus)
+	if(modbus_connect(mb) == -1)
+	{
+		printf("Connect Failed to Modbus ID [%i] on [%s]\n", dataSource[deviceId].modbusId, 
+															 dataSource[deviceId].interface);
+		modbus_flush(mb);
+		modbus_close(mb);
+		modbus_free(mb);
+		return -1;
+	}
+
+	
+	printf("Setting New PWM Cycle time...\n\r");
+	// remember that modbus registers index from 0 so address 40001 = 0th register
+	// register 124 = address 123
+	rc = modbus_write_registers(mb, 123,  1, tableRegisters);
+	if (rc == -1)
+	{
+		printf("Modbus request Fail : Device Address [%i] Start Address [123] For [1] Registers \n",deviceId);
+		modbus_flush(mb);
+		modbus_close(mb);
+		modbus_free(mb);
+		exit(1);
+	}			
+
+
+	modbus_flush(mb);
+	modbus_close(mb);
+	modbus_free(mb);	
+	exit(0);
+
+}
+
+
 
